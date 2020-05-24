@@ -9,6 +9,8 @@ import resolvers from "./resolvers.ts";
 import schema from "./schema.ts";
 
 const executeSchema = async (query: any) => {
+  console.log("LODU");
+  console.log(query);
   const result = await graphql(schema, query, resolvers);
   return result;
 };
@@ -21,7 +23,7 @@ router.post("/graph", async ({ request, response }) => {
     console.log(body);
     const query = `${body.value}`;
     console.log(body.value);
-    const result = await executeSchema(body.value.query);
+    const result = await executeSchema(body.value);
     response.body = result;
     // response.body = "Query Available";
   } else {

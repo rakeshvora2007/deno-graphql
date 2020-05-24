@@ -8,6 +8,9 @@ export const addEntry = async ({ entryType, description, amount }: {
   description: string;
   amount: number;
 }) => {
+  console.log("In Add ENTRY, database db");
+  console.log(entryType);
+
   let dex = new Dex({
     client: client,
   });
@@ -66,6 +69,8 @@ export const addEntry = async ({ entryType, description, amount }: {
 
   result = readableJSON(result);
 
+  console.log(result);
+
   // DROP TABLE Query
   // sqlQuery = dex.schema.dropTable("people").toString();
 
@@ -73,8 +78,6 @@ export const addEntry = async ({ entryType, description, amount }: {
 
   // Closing the connection
   await dexecutor.close();
-
-  return result;
 };
 
 const readableJSON = (rawData: any) => {
