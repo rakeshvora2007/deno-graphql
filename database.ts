@@ -80,6 +80,22 @@ export const addEntry = async ({ entryType, description, amount }: {
   await dexecutor.close();
 };
 
+export const getUser = async() => {
+  return {
+    name: "rakesh",
+    email: "rjain@gmail.com",
+    age: 34
+  }
+}
+
+export const getDegree = async() => {
+  return {
+    instituteName: "ABC Institute",
+    Qualification: "NCAAA"
+  }
+}
+
+
 const readableJSON = (rawData: any) => {
   let newArray = [];
   for (let i = 0; i < rawData.length; i++) {

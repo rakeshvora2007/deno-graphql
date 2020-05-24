@@ -5,14 +5,19 @@ import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 // import {makeExecutableSchema} from 'https://cdn.pika.dev/graphql-tools/^6.0.0';
 // import * as pkg from 'https://cdn.pika.dev/graphql-anywhere@^4.2.6';
 
-import resolvers from "./resolvers.ts";
+import Query from "./resolvers.ts";
 import schema from "./schema.ts";
 
-const executeSchema = async (query: any) => {
-  console.log("LODU");
+const executeSchema = async ({query}: any) => {
   console.log(query);
-  const result = await graphql(schema, query, resolvers);
-  return result;
+  try {
+    const result = await graphql(schema, query, new Query());
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.log(error)
+    throw new Error(error);
+  }
 };
 
 var router = new Router();
@@ -20,9 +25,8 @@ var router = new Router();
 router.post("/graph", async ({ request, response }) => {
   if (request.hasBody) {
     const body = await request.body();
-    console.log(body);
-    const query = `${body.value}`;
-    console.log(body.value);
+    // const query = `${body.value}`;
+    // console.log(body.value);
     const result = await executeSchema(body.value);
     response.body = result;
     // response.body = "Query Available";
