@@ -1,6 +1,10 @@
+import { addEntry } from "./database.ts";
+
 const resolvers = {
-  hello: () => "Hello world!",
-  notHello: () => "Bye Bye World"
+  add: async (root: any, contextL: any, args: any, info: any) => {
+    return await addEntry(args);
+  },
+  notHello: () => "Bye Bye World",
 };
 
 export default resolvers;
