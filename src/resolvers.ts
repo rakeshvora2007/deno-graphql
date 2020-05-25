@@ -29,7 +29,10 @@
 // export default resolvers;
 
 export default class Query {
-  async getUser(args:any, context:any) {
+  async getUser(root: any, args:any, context:any) {
+    console.log(args)
+    console.log(context);
+    console.log()
     return new User({
       name: "rakesh",
       email: "rjain@gmail.com",
@@ -52,7 +55,10 @@ class User {
     this._degree = row.degree;
   }
 
-  async degree(_:any, context:any) {
+  async degree(root: any, args:any, context:any) {
+    console.log(root);
+    console.log(args);
+    console.log(context);
     console.log("degree resolved and result returned");
     return {
       instituteName: "ABC",
