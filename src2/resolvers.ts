@@ -1,6 +1,7 @@
-// import { addEntry, getUser, getDegree } from "./database.ts";
+import { insertExpense } from "./database.ts";
 
 // const resolvers = {
+//   add: "this should work fine",
 //   add: async (root: any, context: any, args: any, info: any) => {
 //     console.log("Root HERE");
 //     console.log(root);
@@ -30,6 +31,7 @@
 
 export default class Query {
   async getUser(args:any, context:any) {
+    
     return new User({
       name: "rakesh",
       email: "rjain@gmail.com",
@@ -38,6 +40,7 @@ export default class Query {
     });
   }
   async getExpense(args:any, context:any) {
+    
     return {
       id: "fakeId",
       name: "Beans",
@@ -46,8 +49,10 @@ export default class Query {
     }
   }
 
-  async addExpense(args:any, context:any) {
-    return args.input;
+  async addExpense({input}:any, context:any) {
+    const result:any = await insertExpense(input);
+    console.log(result);
+    return result[0];
   }
 }
 

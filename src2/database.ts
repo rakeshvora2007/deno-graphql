@@ -1,45 +1,81 @@
 import Dex from "https://deno.land/x/dex/mod.ts";
 import Dexecutor from "https://deno.land/x/dexecutor/mod.ts";
+import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
-const client = "sqlite3";
+// class Database {
+//   constructor() {
+    
+//   }
+  
+//   __init = async() => {
+//     const client = "sqlite3";
+//     let dex = new Dex({
+//       client: client
+//     });
+  
+//     // Creating the query executor
+//     let dexecutor = new Dexecutor({
+//       client: client,
+//       connection: {
+//         filename: "database.db"
+//       }
+//     });
+//     // Opening the connection
+//     console.log("connecting to the db");
+//     await dexecutor.connect();
+//     return dex;
+//   };
 
-export const addEntry = async ({ entryType, description, amount }: {
-  entryType: string;
-  description: string;
+// }
+
+
+export const insertExpense = async ({
+  type,
+  name,
+  amount
+}: {
+  type: string;
+  name: string;
   amount: number;
 }) => {
-  console.log("In Add ENTRY, database db");
-  console.log(entryType);
 
-  let dex = new Dex({
-    client: client,
-  });
+  console.log(type, name, amount);
+  const client = "sqlite3";
+    let dex = new Dex({
+      client: client
+    });
+  
+    // Creating the query executor
+    let dexecutor = new Dexecutor({
+      client: client,
+      connection: {
+        filename: "database.db"
+      },
+      useNullAsDefault: true
+    });
 
-  // Creating the query executor
-  let dexecutor = new Dexecutor({
-    client: client,
-    connection: {
-      filename: "database.db",
-    },
-  });
-
-  // Opening the connection
-  console.log("connecting to the db");
-  await dexecutor.connect();
+    // Opening the connection
+    console.log("connecting to the db");
+    await dexecutor.connect();
 
   let sqlQuery;
 
   // If can't insert Create the Table
 
   console.log("creating the table");
-
+  const myUUID = v4.generate();
+  console.log(myUUID);
+  console.log(typeof myUUID)
   try {
     // CREATE TABLE Query
-    sqlQuery = dex.schema.createTable("budget", (table: any) => {
-      table.string("entryType");
-      table.string("description");
-      table.string("amount");
-    }).toString();
+    sqlQuery = dex.schema
+      .createTable("expense", (table: any) => {
+        table.string("id");
+        table.string("type");
+        table.string("name");
+        table.string("amount");
+      })
+      .toString();
     await dexecutor.execute(sqlQuery);
   } catch (e) {
     console.log(e.message);
@@ -48,28 +84,30 @@ export const addEntry = async ({ entryType, description, amount }: {
   console.log("Inserting to the query");
 
   // INSERT Query
-  sqlQuery = dex.queryBuilder()
-    .insert([
-      { entryType, description, amount },
-    ])
-    .into("budget")
+  sqlQuery = dex
+    .queryBuilder()
+    .insert([{id: myUUID, type, name, amount }])
+    .into("expense")
+    .select("*")
     .toString();
 
-  await dexecutor.execute(sqlQuery);
+    console.log(sqlQuery)
 
+  let check = await dexecutor.execute(sqlQuery);
+  console.log(check);
   console.log("SELECT OPERATION goes here");
 
   // SELECT Query
   let result = await dexecutor.execute(
-    dex.queryBuilder()
+    dex
       .select("*")
-      .from("budget")
-      .toString(),
+      .from("expense")
+      .where({id: myUUID})
+      .toString()
   );
 
   result = readableJSON(result);
 
-  console.log(result);
 
   // DROP TABLE Query
   // sqlQuery = dex.schema.dropTable("people").toString();
@@ -77,32 +115,19 @@ export const addEntry = async ({ entryType, description, amount }: {
   // await dexecutor.execute(sqlQuery);
 
   // Closing the connection
+  console.log("closing connection")
   await dexecutor.close();
+  return result;
 };
-
-export const getUser = async() => {
-  return {
-    name: "rakesh",
-    email: "rjain@gmail.com",
-    age: 34
-  }
-}
-
-export const getDegree = async() => {
-  return {
-    instituteName: "ABC Institute",
-    Qualification: "NCAAA"
-  }
-}
-
 
 const readableJSON = (rawData: any) => {
   let newArray = [];
   for (let i = 0; i < rawData.length; i++) {
     newArray.push({
-      entryType: rawData[i][0],
-      description: rawData[i][1],
-      amount: rawData[i][2],
+      id: rawData[i][0],
+      type: rawData[i][1],
+      name: rawData[i][2],
+      amount: rawData[i][3]
     });
   }
   return newArray;

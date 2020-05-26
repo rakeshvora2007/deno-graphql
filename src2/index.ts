@@ -6,6 +6,9 @@ import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 // import * as pkg from 'https://cdn.pika.dev/graphql-anywhere@^4.2.6';
 // import { ApolloServer, gql } from 'https://cdn.pika.dev/apollo-server-express@^2.13.1';
 
+const networkRectifier = new AbortController();
+const {signal} = networkRectifier;
+
 
 const AUTH = "$t1*u#^r87@3(!";
 
@@ -39,5 +42,5 @@ router.post("/graph", async ({ request, response }) => {
 let app = new Application();
 app.use(router.routes());
 app.use(router.allowedMethods());
-console.log("Server running");
-app.listen({ port: 5000 });
+console.log("Server Running at PORT 5000")
+app.listen({ port: 5000, signal });
