@@ -6,13 +6,12 @@ import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 // import * as pkg from 'https://cdn.pika.dev/graphql-anywhere@^4.2.6';
 // import { ApolloServer, gql } from 'https://cdn.pika.dev/apollo-server-express@^2.13.1';
 
-import Query from "./resolvers.ts";
 import schema from "./schema.ts";
 
 const executeSchema = async ({query}: any) => {
   console.log(query);
   try {
-    const result = await graphql(schema, query, new Query());
+    const result = await graphql(schema, query);
     console.log(result);
     return result;
   } catch (error) {
