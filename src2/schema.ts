@@ -9,7 +9,7 @@ const schema = buildSchema(`
   }
 
   type Query {
-    getTotal: String
+    getBalanceSheet: String
     getExpense(id:String): Expense
     getInconme(id:String): Income
   }
@@ -24,28 +24,28 @@ const schema = buildSchema(`
   type Expense {
     id: ID
     name: String
-    amount: String
+    amount: Float
     type: String
   }
 
   type Income {
     id: ID
     name: String
-    amount: String
+    amount: Float
     type: String
   }
 
   input ExpenseInput {
     id: ID
     name: String
-    amount: String
+    amount: Float
     type: String
   }
 
   input IncomeInput {
     id: ID
     name: String
-    amount: String
+    amount: Float
     type: String
   }
 `);

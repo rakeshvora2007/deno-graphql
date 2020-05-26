@@ -2,32 +2,44 @@ import Dex from "https://deno.land/x/dex/mod.ts";
 import Dexecutor from "https://deno.land/x/dexecutor/mod.ts";
 import { v4 } from "https://deno.land/std/uuid/mod.ts";
 
-// class Database {
-//   constructor() {
-    
-//   }
-  
-//   __init = async() => {
-//     const client = "sqlite3";
-//     let dex = new Dex({
-//       client: client
-//     });
-  
-//     // Creating the query executor
-//     let dexecutor = new Dexecutor({
-//       client: client,
-//       connection: {
-//         filename: "database.db"
-//       }
-//     });
-//     // Opening the connection
-//     console.log("connecting to the db");
-//     await dexecutor.connect();
-//     return dex;
-//   };
+const client = "sqlite3";
+let dex = new Dex({
+  client: client
+});
+let dexecutor = new Dexecutor({
+  client: client,
+  connection: {
+    filename: "database.db"
+  },
+  useNullAsDefault: true
+});
+await dexecutor.connect();
 
-// }
+export const calculateBalance = async () => {
+  let check_if_expense_table_exist = dex
+    .select("name")
+    .from("sqlite_master")
+    .where({ type: "table", name: "expense" })
+    .toString();
+  let expenseTableExist = await dexecutor.execute(check_if_expense_table_exist);
 
+  let check_if_income_table_exist = dex
+    .select("name")
+    .from("sqlite_master")
+    .where({ type: "table", name: "income" })
+    .toString();
+  let incomeTableExist = await dexecutor.execute(check_if_income_table_exist);
+
+  if(expenseTableExist && incomeTableExist) {
+    try {
+      let [[expenseTotal]] = await dexecutor.execute(`SELECT sum(amount) FROM expense`);
+      let [[incomeTotal]] = await dexecutor.execute(`SELECT sum(amount) FROM income`);
+      return (incomeTotal + expenseTotal).toFixed(2);
+    } catch (error) {
+      return new Error(error.message);
+    }
+  }
+}
 
 export const insertExpense = async ({
   type,
@@ -38,87 +50,203 @@ export const insertExpense = async ({
   name: string;
   amount: number;
 }) => {
-
-  console.log(type, name, amount);
-  const client = "sqlite3";
-    let dex = new Dex({
-      client: client
-    });
-  
-    // Creating the query executor
-    let dexecutor = new Dexecutor({
-      client: client,
-      connection: {
-        filename: "database.db"
-      },
-      useNullAsDefault: true
-    });
-
-    // Opening the connection
-    console.log("connecting to the db");
-    await dexecutor.connect();
-
-  let sqlQuery;
-
-  // If can't insert Create the Table
-
-  console.log("creating the table");
   const myUUID = v4.generate();
-  console.log(myUUID);
-  console.log(typeof myUUID)
-  try {
-    // CREATE TABLE Query
-    sqlQuery = dex.schema
-      .createTable("expense", (table: any) => {
-        table.string("id");
-        table.string("type");
-        table.string("name");
-        table.string("amount");
-      })
-      .toString();
-    await dexecutor.execute(sqlQuery);
-  } catch (e) {
-    console.log(e.message);
+
+  let check_if_table_exist = dex
+    .select("name")
+    .from("sqlite_master")
+    .where({ type: "table", name: "expense" })
+    .toString();
+  let exist = await dexecutor.execute(check_if_table_exist);
+
+  if (!exist.length) {
+    try {
+      const sqlQuery = dex.schema
+        .createTable("expense", (table: any) => {
+          table.string("id");
+          table.string("type");
+          table.string("name");
+          table.float("amount");
+        })
+        .toString();
+      await dexecutor.execute(sqlQuery);
+    } catch (error) {
+      return new Error(error.message);
+    }
   }
 
-  console.log("Inserting to the query");
+  try {
+    const insertExpenseQuery = dex
+      .queryBuilder()
+      .insert([{ id: myUUID, type, name, amount }])
+      .into("expense")
+      .select("*")
+      .toString();
 
-  // INSERT Query
-  sqlQuery = dex
-    .queryBuilder()
-    .insert([{id: myUUID, type, name, amount }])
-    .into("expense")
-    .select("*")
-    .toString();
+    await dexecutor.execute(insertExpenseQuery);
+    let result = await dexecutor.execute(
+      dex
+        .select()
+        .from("expense")
+        .where({ id: myUUID })
+        .toString()
+    );
+    result = readableJSON(result)[0];
+    return result;
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
 
-    console.log(sqlQuery)
-
-  let check = await dexecutor.execute(sqlQuery);
-  console.log(check);
-  console.log("SELECT OPERATION goes here");
-
-  // SELECT Query
-  let result = await dexecutor.execute(
+export const removeExpense = async (id: string) => {
+  let deleteRecord = await dexecutor.execute(
     dex
       .select("*")
       .from("expense")
-      .where({id: myUUID})
+      .where({ id })
       .toString()
   );
 
-  result = readableJSON(result);
-
-
-  // DROP TABLE Query
-  // sqlQuery = dex.schema.dropTable("people").toString();
-
-  // await dexecutor.execute(sqlQuery);
-
-  // Closing the connection
-  console.log("closing connection")
-  await dexecutor.close();
-  return result;
+  if (deleteRecord.length) {
+    try {
+      await dexecutor.execute(
+        dex
+          .delete("*")
+          .from("expense")
+          .where({ id })
+          .toString()
+      );
+      return readableJSON(deleteRecord)[0];
+    } catch (error) {
+      return new Error(error.message);
+    }
+  } else {
+    return new Error("Record with given ID doesn't exist");
+  }
 };
+
+export const readExpense = async (id: string) => {
+  try {
+    let foundRecord = await dexecutor.execute(
+      dex
+        .select("*")
+        .from("expense")
+        .where({ id })
+        .toString()
+    );
+    if (foundRecord.length) {
+      return readableJSON(foundRecord)[0];
+    } else {
+      return new Error("Record with given ID doesn't exist");
+    }
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
+export const insertIncome = async ({
+  type,
+  name,
+  amount
+}: {
+  type: string;
+  name: string;
+  amount: number;
+}) => {
+  const myUUID = v4.generate();
+
+  let check_if_table_exist = dex
+    .select("name")
+    .from("sqlite_master")
+    .where({ type: "table", name: "income" })
+    .toString();
+  let exist = await dexecutor.execute(check_if_table_exist);
+
+  if (!exist.length) {
+    try {
+      let createIncomeTableQuery = dex.schema
+        .createTable("income", (table: any) => {
+          table.string("id");
+          table.string("type");
+          table.string("name");
+          table.float("amount");
+        })
+        .toString();
+      await dexecutor.execute(createIncomeTableQuery);
+    } catch (error) {
+      return new Error(error.message);
+    }
+  }
+
+  try {
+    const insertIncomeQuery = dex
+      .queryBuilder()
+      .insert([{ id: myUUID, type, name, amount }])
+      .into("income")
+      .select("*")
+      .toString();
+
+    await dexecutor.execute(insertIncomeQuery);
+    let result = await dexecutor.execute(
+      dex
+        .select()
+        .from("income")
+        .where({ id: myUUID })
+        .toString()
+    );
+    result = readableJSON(result)[0];
+    return result;
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
+export const removeIncome = async (id: string) => {
+  let deleteRecord = await dexecutor.execute(
+    dex
+      .select("*")
+      .from("income")
+      .where({ id })
+      .toString()
+  );
+
+  if (deleteRecord.length) {
+    try {
+      await dexecutor.execute(
+        dex
+          .delete("*")
+          .from("income")
+          .where({ id })
+          .toString()
+      );
+      return readableJSON(deleteRecord)[0];
+    } catch (error) {
+      return new Error(error.message);
+    }
+  } else {
+    return new Error("Record with given ID doesn't exist");
+  }
+};
+
+export const readIncome = async (id: string) => {
+  try {
+    let foundRecord = await dexecutor.execute(
+      dex
+        .select("*")
+        .from("income")
+        .where({ id })
+        .toString()
+    );
+    if (foundRecord.length) {
+      return readableJSON(foundRecord)[0];
+    } else {
+      return new Error("Record with given ID doesn't exist");
+    }
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
 
 const readableJSON = (rawData: any) => {
   let newArray = [];
