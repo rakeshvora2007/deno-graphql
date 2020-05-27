@@ -12,6 +12,8 @@ const schema = buildSchema(`
     getBalanceSheet: String
     getExpense(id:String): Expense
     getInconme(id:String): Income
+    getAllExpenses: [Expense]
+    getAllIncomes: [Income]
   }
 
   type Mutation {

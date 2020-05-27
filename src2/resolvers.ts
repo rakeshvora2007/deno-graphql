@@ -5,7 +5,9 @@ import {
   removeExpense,
   insertIncome,
   readIncome,
-  removeIncome
+  removeIncome,
+  readAllExpenses,
+  readAllIncomes
 } from "./database.ts";
 
 export default class Query {
@@ -16,6 +18,11 @@ export default class Query {
 
   async getExpense({ id }: any) {
     const result: any = await readExpense(id);
+    return result;
+  }
+
+  async getAllExpenses() {
+    const result: any = await readAllExpenses();
     return result;
   }
 
@@ -31,6 +38,11 @@ export default class Query {
 
   async getIncome({ id }: any) {
     const result: any = await readIncome(id);
+    return result;
+  }
+
+  async getAllIncomes() {
+    const result: any = await readAllIncomes();
     return result;
   }
 

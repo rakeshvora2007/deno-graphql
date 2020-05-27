@@ -247,6 +247,42 @@ export const readIncome = async (id: string) => {
   }
 };
 
+export const readAllExpenses = async () => {
+  try {
+    let foundRecord = await dexecutor.execute(
+      dex
+        .select("*")
+        .from("expense")
+        .toString()
+    );
+    if (foundRecord.length) {
+      return readableJSON(foundRecord);
+    } else {
+      return new Error("Record with given ID doesn't exist");
+    }
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
+export const readAllIncomes = async () => {
+  try {
+    let foundRecord = await dexecutor.execute(
+      dex
+        .select("*")
+        .from("income")
+        .toString()
+    );
+    if (foundRecord.length) {
+      return readableJSON(foundRecord);
+    } else {
+      return new Error("Record with given ID doesn't exist");
+    }
+  } catch (error) {
+    return new Error(error.message);
+  }
+};
+
 
 const readableJSON = (rawData: any) => {
   let newArray = [];
